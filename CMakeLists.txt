@@ -12,6 +12,8 @@ set(VERSION "${LIBXML_MAJOR_VERSION}.${LIBXML_MINOR_VERSION}.${LIBXML_MICRO_VERS
 
 project(libxml2 VERSION ${VERSION} LANGUAGES C)
 
+message(STATUS "libxml2 version ${VERSION}")
+
 include(CheckCSourceCompiles)
 include(CheckFunctionExists)
 include(CheckIncludeFiles)
@@ -31,18 +33,18 @@ set(LIBXML2_WITH_EXPR ON)
 option(LIBXML2_WITH_FTP "Add the FTP support" OFF)
 option(LIBXML2_WITH_HTML "Add the HTML support" ON)
 option(LIBXML2_WITH_HTTP "Add the HTTP support" ON)
-option(LIBXML2_WITH_ICONV "Add ICONV support" ON)
+option(LIBXML2_WITH_ICONV "Add ICONV support" OFF)
 option(LIBXML2_WITH_ICU "Add ICU support" OFF)
 option(LIBXML2_WITH_ISO8859X "Add ISO8859X support if no iconv" ON)
 option(LIBXML2_WITH_LEGACY "Add deprecated APIs for compatibility" OFF)
-option(LIBXML2_WITH_LZMA "Use liblzma" ON)
+option(LIBXML2_WITH_LZMA "Use liblzma" OFF)
 option(LIBXML2_WITH_MEM_DEBUG "Add the memory debugging module" OFF)
 option(LIBXML2_WITH_MODULES "Add the dynamic modules support" ON)
 option(LIBXML2_WITH_OUTPUT "Add the serialization support" ON)
 option(LIBXML2_WITH_PATTERN "Add the xmlPattern selection interface" ON)
 option(LIBXML2_WITH_PROGRAMS "Build programs" ON)
 option(LIBXML2_WITH_PUSH "Add the PUSH parser interfaces" ON)
-option(LIBXML2_WITH_PYTHON "Build Python bindings" ON)
+option(LIBXML2_WITH_PYTHON "Build Python bindings" OFF)
 option(LIBXML2_WITH_READER "Add the xmlReader parsing interface" ON)
 option(LIBXML2_WITH_REGEXPS "Add Regular Expressions support" ON)
 option(LIBXML2_WITH_SAX1 "Add the older SAX1 interface" ON)
@@ -60,8 +62,33 @@ option(LIBXML2_WITH_XINCLUDE "Add the XInclude support" ON)
 option(LIBXML2_WITH_XPATH "Add the XPATH support" ON)
 option(LIBXML2_WITH_XPTR "Add the XPointer support" ON)
 option(LIBXML2_WITH_XPTR_LOCS "Add support for XPointer locations" OFF)
-option(LIBXML2_WITH_ZLIB "Use libz" ON)
+#option(LIBXML2_WITH_ZLIB "Use libz" ON)
 set(LIBXML2_XMLCONF_WORKING_DIR ${CMAKE_CURRENT_BINARY_DIR} CACHE PATH "Working directory for XML Conformance Test Suite")
+
+option(LIBXML2_WITH_SHARED_LIBRARIES "Build shared version of the libxml2 library." OFF)
+option(LIBXML2_WITH_SHARED_ZLIB "Build libxml2 with shared version of Zlib." OFF)
+option(LIBXML2_WITH_ZLIB "Build libxml2 with Zlib." OFF)
+option(LIBXML2_WITHOUT_APPS "Build libxml2 without apps." OFF)
+option(LIBXML2_WITHOUT_INSTALL_ALL "Build libxml2 without installing all artifacts." OFF)
+option(LIBXML2_WITHOUT_INSTALL_FILES "Build libxml2 without installing files." OFF)
+option(LIBXML2_WITHOUT_INSTALL_HEADERS "Build libxml2 without installing headers." OFF)
+option(LIBXML2_WITHOUT_INSTALL_LIBRARIES "Build libxml2 without installing libraries." OFF)
+option(LIBXML2_WITHOUT_TEST_APPS "Build libxml2 without test apps." OFF)
+if(LIBXML2_WITH_SHARED_LIBRARIES)
+	set(BUILD_SHARED_LIBS ON)
+else()
+	set(BUILD_SHARED_LIBS OFF)
+endif()
+if(LIBXML2_WITHOUT_APPS)
+	set(LIBXML2_WITH_PROGRAMS OFF)
+else()
+	set(LIBXML2_WITH_PROGRAMS ON)
+endif()
+if(LIBXML2_WITHOUT_TEST_APPS)
+	set(LIBXML2_WITH_TESTS OFF)
+else()
+	set(LIBXML2_WITH_TESTS ON)
+endif()
 
 if(LIBXML2_WITH_ICONV)
 	find_package(Iconv REQUIRED)
@@ -89,7 +116,15 @@ if(LIBXML2_WITH_THREADS)
 endif()
 
 if(LIBXML2_WITH_ZLIB)
-	find_package(ZLIB REQUIRED)
+	if(LIBXML2_WITH_SHARED_ZLIB)
+		set(ZLIB_USE_STATIC_LIBS OFF)
+	else()
+		set(ZLIB_USE_STATIC_LIBS ON)
+	endif()
+	find_package(SiblingZLIB)
+	if(NOT ZLIB_FOUND)
+		find_package(ZLIB REQUIRED)
+	endif()
 endif()
 
 foreach(VARIABLE IN ITEMS WITH_AUTOMATA WITH_C14N WITH_CATALOG WITH_DEBUG WITH_EXPR WITH_FTP WITH_HTML WITH_HTTP WITH_ICONV WITH_ICU WITH_ISO8859X WITH_LEGACY WITH_LZMA WITH_MEM_DEBUG WITH_MODULES WITH_OUTPUT WITH_PATTERN WITH_PUSH WITH_READER WITH_REGEXPS WITH_SAX1 WITH_SCHEMAS WITH_SCHEMATRON WITH_THREADS WITH_THREAD_ALLOC WITH_TREE WITH_TRIO WITH_UNICODE WITH_VALID WITH_WRITER WITH_XINCLUDE WITH_XPATH WITH_XPTR WITH_XPTR_LOCS WITH_ZLIB)
@@ -425,36 +460,40 @@ set_target_properties(
         SOVERSION ${LIBXML_MAJOR_VERSION}
 )
 
-if(MSVC)
-	if(BUILD_SHARED_LIBS)
-		set_target_properties(
-			LibXml2
-			PROPERTIES
-			DEBUG_POSTFIX d
-		)
-	else()
-		set_target_properties(
-			LibXml2
-			PROPERTIES
-			DEBUG_POSTFIX sd
-			MINSIZEREL_POSTFIX s
-			RELEASE_POSTFIX s
-			RELWITHDEBINFO_POSTFIX s
-		)
-	endif()
+#if(MSVC)
+#	if(BUILD_SHARED_LIBS)
+#		set_target_properties(
+#			LibXml2
+#			PROPERTIES
+#			DEBUG_POSTFIX d
+#		)
+#	else()
+#		set_target_properties(
+#			LibXml2
+#			PROPERTIES
+#			DEBUG_POSTFIX sd
+#			MINSIZEREL_POSTFIX s
+#			RELEASE_POSTFIX s
+#			RELWITHDEBINFO_POSTFIX s
+#		)
+#	endif()
+#endif()
+
+if(NOT LIBXML2_WITHOUT_INSTALL_HEADERS AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(FILES ${LIBXML2_HDRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libxml2/libxml COMPONENT development)
 endif()
 
-install(FILES ${LIBXML2_HDRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libxml2/libxml COMPONENT development)
+if(NOT LIBXML2_WITHOUT_INSTALL_LIBRARIES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(
+		TARGETS	LibXml2
+		#EXPORT LibXml2
+		ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
+		LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development
+		RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
+	)
+endif()
 
-install(
-	TARGETS	LibXml2
-	EXPORT LibXml2
-	ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
-	LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development
-	RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT runtime
-)
-
-if(MSVC AND BUILD_SHARED_LIBS)
+if(MSVC AND BUILD_SHARED_LIBS AND NOT LIBXML2_WITHOUT_INSTALL_LIBRARIES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
 	install(FILES $<TARGET_PDB_FILE:LibXml2> DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS Debug RelWithDebInfo COMPONENT debug)
 endif()
 
@@ -475,7 +514,12 @@ if(LIBXML2_WITH_PROGRAMS)
 		if(HAVE_LIBREADLINE)
 			target_link_libraries(${PROGRAM} readline)
 		endif()
-		install(TARGETS	${PROGRAM} EXPORT LibXml2 RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT programs)
+		if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+			install(
+				TARGETS	${PROGRAM}
+				#EXPORT LibXml2
+				RUNTIME DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT programs)
+		endif()
 	endforeach()
 endif()
 
@@ -571,27 +615,31 @@ if(LIBXML2_WITH_PYTHON)
 	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2.py DESTINATION ${LIBXML2_PYTHON_INSTALL_DIR} COMPONENT runtime)
 endif()
 
-install(FILES doc/xml2-config.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT documentation)
-install(FILES doc/xmlcatalog.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT documentation)
-install(FILES doc/xmllint.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT documentation)
-install(DIRECTORY doc/ DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT documentation
-	PATTERN "Makefile.*" EXCLUDE
-	PATTERN "*.1" EXCLUDE
-	PATTERN "*.py" EXCLUDE
-	PATTERN "*.res" EXCLUDE
-	PATTERN "*.xml" EXCLUDE
-	PATTERN "*.xsl" EXCLUDE)
+if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(FILES doc/xml2-config.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT documentation)
+	install(FILES doc/xmlcatalog.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT documentation)
+	install(FILES doc/xmllint.1 DESTINATION ${CMAKE_INSTALL_MANDIR}/man1 COMPONENT documentation)
+	install(DIRECTORY doc/ DESTINATION ${CMAKE_INSTALL_DOCDIR} COMPONENT documentation
+		PATTERN "Makefile.*" EXCLUDE
+		PATTERN "*.1" EXCLUDE
+		PATTERN "*.py" EXCLUDE
+		PATTERN "*.res" EXCLUDE
+		PATTERN "*.xml" EXCLUDE
+		PATTERN "*.xsl" EXCLUDE)
+endif()
 
 configure_package_config_file(
 	libxml2-config.cmake.cmake.in libxml2-config.cmake
 	INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
 )
 
-install(
-	FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config.cmake
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
-	COMPONENT development
-)
+if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(
+		FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config.cmake
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
+		COMPONENT development
+	)
+endif()
 
 write_basic_package_version_file(
 	${CMAKE_CURRENT_BINARY_DIR}/libxml2-config-version.cmake
@@ -599,19 +647,21 @@ write_basic_package_version_file(
 	COMPATIBILITY ExactVersion
 )
 
-install(
-	FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config-version.cmake
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
-	COMPONENT development
-)
+if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(
+		FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config-version.cmake
+		DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
+		COMPONENT development
+	)
+endif()
 
-install(
-	EXPORT LibXml2
-	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
-	NAMESPACE LibXml2::
-	FILE libxml2-export.cmake
-	COMPONENT development
-)
+#install(
+#	EXPORT LibXml2
+#	DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
+#	NAMESPACE LibXml2::
+#	FILE libxml2-export.cmake
+#	COMPONENT development
+#)
 
 if(MSVC)
 	configure_file(include/win32config.h config.h COPYONLY)
@@ -619,7 +669,9 @@ else()
 	configure_file(config.h.cmake.in config.h)
 endif()
 configure_file(include/libxml/xmlversion.h.in libxml/xmlversion.h)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml/xmlversion.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libxml2/libxml COMPONENT development)
+if(NOT LIBXML2_WITHOUT_INSTALL_HEADERS AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml/xmlversion.h DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libxml2/libxml COMPONENT development)
+endif()
 
 if(LIBXML2_WITH_PYTHON)
 	set(prefix "${CMAKE_INSTALL_PREFIX}")
@@ -643,15 +695,19 @@ set(exec_prefix "\${prefix}")
 set(libdir "\${prefix}/${CMAKE_INSTALL_LIBDIR}")
 set(includedir "\${prefix}/${CMAKE_INSTALL_INCLUDEDIR}")
 configure_file(libxml-2.0.pc.in libxml-2.0.pc @ONLY)
-install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml-2.0.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT development)
+if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml-2.0.pc DESTINATION ${CMAKE_INSTALL_LIBDIR}/pkgconfig COMPONENT development)
+endif()
 
 if(WIN32)
 	set(prefix "\$(cd \"\$(dirname \"\$0\")\"; pwd -P)/..")
 endif()
 configure_file(xml2-config.in xml2-config @ONLY)
-install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/xml2-config DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT development)
+if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
+	install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/xml2-config DESTINATION ${CMAKE_INSTALL_BINDIR} COMPONENT development)
+endif()
 
-if(UNIX)
+if(UNIX AND NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
 	install(FILES ${CMAKE_CURRENT_SOURCE_DIR}/libxml.m4 DESTINATION ${CMAKE_INSTALL_DATADIR}/aclocal)
 endif()
 

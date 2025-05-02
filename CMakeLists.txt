@@ -75,19 +75,19 @@ option(LIBXML2_WITHOUT_INSTALL_HEADERS "Build libxml2 without installing headers
 option(LIBXML2_WITHOUT_INSTALL_LIBRARIES "Build libxml2 without installing libraries." OFF)
 option(LIBXML2_WITHOUT_TEST_APPS "Build libxml2 without test apps." OFF)
 if(LIBXML2_WITH_SHARED_LIBRARIES)
-	set(BUILD_SHARED_LIBS ON)
+    set(BUILD_SHARED_LIBS ON)
 else()
-	set(BUILD_SHARED_LIBS OFF)
+    set(BUILD_SHARED_LIBS OFF)
 endif()
 if(LIBXML2_WITHOUT_APPS)
-	set(LIBXML2_WITH_PROGRAMS OFF)
+    set(LIBXML2_WITH_PROGRAMS OFF)
 else()
-	set(LIBXML2_WITH_PROGRAMS ON)
+    set(LIBXML2_WITH_PROGRAMS ON)
 endif()
 if(LIBXML2_WITHOUT_TEST_APPS)
-	set(LIBXML2_WITH_TESTS OFF)
+    set(LIBXML2_WITH_TESTS OFF)
 else()
-	set(LIBXML2_WITH_TESTS ON)
+    set(LIBXML2_WITH_TESTS ON)
 endif()
 
 if(LIBXML2_WITH_PYTHON)
@@ -184,7 +184,12 @@ if (NOT MSVC)
     check_function_exists(stat HAVE_STAT)
     check_include_files(stdint.h HAVE_STDINT_H)
     check_include_files(sys/mman.h HAVE_SYS_MMAN_H)
-    check_include_files(sys/random.h HAVE_SYS_RANDOM_H)
+    if (APPLE)
+        # In old macOS SDKs (ex: 10.15), sys/random.h fails to include header files it needs, so add them here.
+        check_include_files("Availability.h;stddef.h;sys/random.h" HAVE_SYS_RANDOM_H)
+    else()
+        check_include_files(sys/random.h HAVE_SYS_RANDOM_H)
+    endif()
     check_include_files(sys/select.h HAVE_SYS_SELECT_H)
     check_include_files(sys/socket.h HAVE_SYS_SOCKET_H)
     check_include_files(sys/stat.h HAVE_SYS_STAT_H)
@@ -493,7 +498,7 @@ set_target_properties(
 #endif()
 
 if(NOT LIBXML2_WITHOUT_INSTALL_HEADERS AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
-	install(FILES ${LIBXML2_HDRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libxml2/libxml COMPONENT development)
+    install(FILES ${LIBXML2_HDRS} DESTINATION ${CMAKE_INSTALL_INCLUDEDIR}/libxml2/libxml COMPONENT development)
 endif()
 
 if(NOT LIBXML2_WITHOUT_INSTALL_LIBRARIES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
@@ -507,7 +512,7 @@ if(NOT LIBXML2_WITHOUT_INSTALL_LIBRARIES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
 endif()
 
 if(MSVC AND BUILD_SHARED_LIBS AND NOT LIBXML2_WITHOUT_INSTALL_LIBRARIES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
-	install(FILES $<TARGET_PDB_FILE:LibXml2> DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS Debug RelWithDebInfo COMPONENT debug)
+    install(FILES $<TARGET_PDB_FILE:LibXml2> DESTINATION ${CMAKE_INSTALL_BINDIR} CONFIGURATIONS Debug RelWithDebInfo COMPONENT debug)
 endif()
 
 if(LIBXML2_WITH_PROGRAMS)
@@ -593,7 +598,7 @@ if(LIBXML2_WITH_PYTHON)
     file(APPEND ${CMAKE_CURRENT_BINARY_DIR}/libxml2.py.in "${LIBXML2CLASS_PY}")
     configure_file(${CMAKE_CURRENT_BINARY_DIR}/libxml2.py.in libxml2.py COPYONLY)
     add_library(
-        LibXml2Mod
+        LibXml2Mod SHARED
         libxml2-py.c
         libxml2-py.h
         python/libxml.c
@@ -659,7 +664,7 @@ endif()
 write_basic_package_version_file(
     ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config-version.cmake
     VERSION ${PROJECT_VERSION}
-    COMPATIBILITY ExactVersion
+    COMPATIBILITY SameMajorVersion
 )
 
 if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)

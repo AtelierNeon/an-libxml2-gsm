@@ -1,7 +1,7 @@
 project(
     'libxml2',
     'c',
-    version: '2.13.8',
+    version: '2.13.9',
     license: 'MIT',
     default_options: ['buildtype=debug', 'warning_level=3'],
     meson_version: '>= 0.61',
@@ -763,6 +763,7 @@ pkgmod.generate(
     description: 'libXML library version2.',
     filebase: 'libxml-2.0',
     name: 'libXML',
+    subdirs:  [meson.project_name()],
     variables: 'modules=' + dl_dep.found().to_string('1', '0'),
 )
 
@@ -772,6 +773,9 @@ config_cmake = configuration_data()
 config_cmake.set('LIBXML_MAJOR_VERSION', v_maj)
 config_cmake.set('LIBXML_MINOR_VERSION', v_min)
 config_cmake.set('LIBXML_MICRO_VERSION', v_mic)
+config_cmake.set('INSTALL_BINDIR', dir_bin)
+config_cmake.set('INSTALL_INCLUDEDIR', dir_include)
+config_cmake.set('INSTALL_LIBDIR', dir_lib)
 config_cmake.set('VERSION', meson.project_version())
 config_cmake.set('WITH_ICONV', iconv_dep.found().to_int().to_string())
 config_cmake.set('WITH_ICU', icu_dep.found().to_int().to_string())

@@ -468,7 +468,7 @@ endif()
 
 if(NOT LIBXML2_WITHOUT_INSTALL_LIBRARIES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
     install(
-        TARGETS	LibXml2
+        TARGETS    LibXml2
         #EXPORT LibXml2
         ARCHIVE DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT development
         LIBRARY DESTINATION ${CMAKE_INSTALL_LIBDIR} COMPONENT runtime NAMELINK_COMPONENT development
@@ -534,9 +534,7 @@ if(LIBXML2_WITH_TESTS)
     if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/xmlconf/xmlconf.xml)
         add_test(NAME runxmlconf COMMAND runxmlconf WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
     endif()
-    if(NOT WIN32)
-        add_test(NAME testapi COMMAND testapi)
-    endif()
+    add_test(NAME testapi COMMAND testapi)
     add_test(NAME testchar COMMAND testchar)
     add_test(NAME testdict COMMAND testdict)
     add_test(NAME testparser COMMAND testparser WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})

@@ -400,10 +400,6 @@ endif()
 if(WIN32)
     target_link_libraries(LibXml2 PRIVATE bcrypt)
     set(CRYPTO_LIBS "-lbcrypt")
-    if(LIBXML2_WITH_HTTP)
-        target_link_libraries(LibXml2 PRIVATE ws2_32)
-        set(WINSOCK_LIBS "-lws2_32")
-    endif()
 endif()
 
 if(LIBXML2_WITH_ICONV)
@@ -555,7 +551,11 @@ if(LIBXML2_WITH_TESTS)
     endforeach()
     if(Threads_FOUND)
         foreach(TEST runtest)
+        if(LIBXML2_WITH_ZLIB)
+            target_link_libraries(${TEST} ZLIB::ZLIB Threads::Threads)
+        else()
             target_link_libraries(${TEST} Threads::Threads)
+        endif()
         endforeach()
     endif()
     add_test(NAME runtest COMMAND runtest --out ${CMAKE_CURRENT_BINARY_DIR} WORKING_DIRECTORY ${CMAKE_CURRENT_SOURCE_DIR})
@@ -754,7 +754,7 @@ configure_package_config_file(
 if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
     install(
         FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2
         COMPONENT development
     )
 endif()
@@ -768,14 +768,14 @@ write_basic_package_version_file(
 if(NOT LIBXML2_WITHOUT_INSTALL_FILES AND NOT LIBXML2_WITHOUT_INSTALL_ALL)
     install(
         FILES ${CMAKE_CURRENT_BINARY_DIR}/libxml2-config-version.cmake
-        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
+        DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2
         COMPONENT development
     )
 endif()
 
 #install(
 #    EXPORT LibXml2
-#    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2-${PROJECT_VERSION}
+#    DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/libxml2
 #    NAMESPACE LibXml2::
 #    FILE libxml2-export.cmake
 #    COMPONENT development
